@@ -51,10 +51,10 @@ const main = async () => {
         console.log('Descripción:', descripcion.cyan);
         break;
       case 2:
-        console.log(busquedas.historialCapitalizado.forEach((lugar, i) => {
+        busquedas.historialCapitalizado.forEach((lugar, i) => {
           const idx = `${i + 1}.`.green;
           console.log(`${idx} ${lugar}`);
-        }));
+        });
         break;
     }
     if (opt !== 0) await pausa();
