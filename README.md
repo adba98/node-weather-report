@@ -5,4 +5,4 @@
 - dotenv
 - axios
 - inquirer
-- - colors
+- colors
