@@ -1,64 +1,54 @@
 require('dotenv').config();
-
-const {
-  leerInput,
-  inquireMenu,
-  pausa,
-  listarLugares
-} = require('./helpers/inquirer');
-const Busquedas = require('./models/busquedas');
-
-
 require('colors');
 
+const {
+  inquireMenu,
+  selectPlaceFromList,
+  pause,
+  readInput,
+} = require('./helpers/inquirer');
+const SearchManager = require('./models/SearchManager');
+
 const main = async () => {
-  const busquedas = new Busquedas();
-  let opt = '';
+  const searchManager = new SearchManager();
+  let choices = '';
   do {
     console.clear();
-    opt = await inquireMenu();
-    switch (opt) {
+    choices = await inquireMenu();
+    switch (choices) {
       case 1:
-        // Mostrar msj
-        const aBuscar = await leerInput('Ciudad: ');
+        const placeToSearch = await readInput();
+        const places = await searchManager.searchPlace(placeToSearch);
 
-        // Buscar lugares
-        const lugares = await busquedas.ciudad(aBuscar);
+        const idPlaceSelected = await selectPlaceFromList(places);
+        if (idPlaceSelected === '0') continue;
 
-        // Seleccionar lugar
-        const idSeleccion = await listarLugares(lugares);
-        if (idSeleccion === '0') continue;
+        const placeSelected = places.find(({ id }) => id === idPlaceSelected);
+        const { name: place, latitude, longitude } = placeSelected;
+        searchManager.addHistory(place);
 
-        const lugarSel = lugares.find(l => l.id === idSeleccion);
+        const climate = await searchManager.checkWeather(latitude, longitude);
+        const { description, name, min, max, temp } = climate;
 
-        // Persistir en json
-        busquedas.agregarHistorial(lugarSel.nombre);
-
-        // Clima
-        const clima = await busquedas.climaLugar(lugarSel.lat, lugarSel.lng);
-        const { descripcion, name, min, max, temp } = clima;
-
-        // Mostrar info de lugar
         console.clear();
-        console.log('\nInformación de la ciudad\n'.cyan);
-        console.log('Ciudad:', lugarSel.nombre.cyan);
-        console.log('Lat', lugarSel.lat);
-        console.log('Long', lugarSel.lng);
-        console.log('Ubicación:', name.green);
-        console.log('Temperatura', temp);
-        console.log('Minima:', min);
-        console.log('Maxima:', max);
-        console.log('Descripción:', descripcion.cyan);
+        console.log(`\nInformation to ${place}`.cyan);
+        console.log(`Location: ${name.green}`);
+        console.log(`Description: ${description.cyan}`);
+        console.log(`Latitude: ${latitude}`);
+        console.log(`Longitude: ${longitude}`);
+        console.log(`Temperature: ${temp}°C`);
+        console.log(`Maximum: ${min}°C`);
+        console.log(`Minimum: ${max}°C`);
         break;
       case 2:
-        busquedas.historialCapitalizado.forEach((lugar, i) => {
+        searchManager.searchHistory.forEach((place, i) => {
           const idx = `${i + 1}.`.green;
-          console.log(`${idx} ${lugar}`);
+          console.log(`${idx} ${place}`);
         });
         break;
     }
-    if (opt !== 0) await pausa();
-  } while (opt !== 0);
-}
+    if (choices !== 3) await pause();
+  } while (choices !== 3);
+};
 
 main();

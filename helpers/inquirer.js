@@ -1,116 +1,78 @@
-const inquirer = require('inquirer');
 require('colors');
+const inquirer = require('inquirer');
 
-const preguntas = [{
+const choices = [
+  { value: 1, name: 'Find a place' },
+  { value: 2, name: 'View history' },
+  { value: 3, name: 'Exit' },
+].map((choice) => ({
+  ...choice,
+  name: `${`${choice.value.toString()}.`.cyan} ${choice.name}`,
+}));
+
+const menu = {
   type: 'list',
-  name: 'opt',
-  message: 'Que deseas hacer?',
-  choices: [
-    {
-      value: 1,
-      name: `${'1.'.cyan} Buscar lugar`
-    }, {
-      value: 2,
-      name: `${'2.'.cyan} Ver historial`
-    }, {
-      value: 0,
-      name: `${'3.'.cyan} Salir`
-    }
-  ]
-}];
+  name: 'choices',
+  message: 'What do you want to do?',
+  choices,
+};
 
 const inquireMenu = async () => {
-  console.log('======================='.cyan);
-  console.log(' Seleccione una opcion '.black.bgCyan);
-  console.log('======================='.cyan);
+  console.log('==================='.cyan);
+  console.log(' Select an option '.black.bgCyan);
+  console.log('==================='.cyan);
 
-  const { opt } = await inquirer.prompt(preguntas);
-  return opt;
-}
+  const { choices } = await inquirer.prompt(menu);
+  return choices;
+};
 
-const pausa = async () => {
-  console.log();
-  const question = [{
+const readInput = async () => {
+  const question = {
     type: 'input',
-    name: 'enter',
-    message: `Presione : ${'ENTER'.cyan} para continuar`,
-  }];
-  await inquirer.prompt(question);
-}
-
-const leerInput = async (msn) => {
-  const question = [{
-    type: 'input',
-    name: 'desc',
-    message: msn,
+    name: 'place',
+    message: 'Place:',
     validate(value) {
-      if (value.length === 0) {
-        return 'Por favor ingrese un valor';
-      }
-      return true;
-    }
-  }];
-  const { desc } = await inquirer.prompt(question);
-  return desc;
-}
+      return value.trim().length !== 0 || 'Please enter a value';
+    },
+  };
+  const { place } = await inquirer.prompt(question);
+  return place;
+};
 
-const listarLugares = async (lugares = []) => {
-  const choices = lugares.map((lugar, i) => {
+const selectPlaceFromList = async (places = []) => {
+  const choices = places.map(({ id, name }, i) => {
     const idx = `${i + 1}.`.cyan;
     return {
-      value: lugar.id,
-      name: `${idx} ${lugar.nombre}`
-    }
+      value: id,
+      name: `${idx} ${name}`,
+    };
   });
-  choices.unshift({
-    value: '0',
-    name: `${'0.'.cyan} Cancelar`
-  })
-  const preguntas = [{
+
+  choices.unshift({ value: '0', name: `${'0.'.cyan} Cancel` });
+
+  const question = {
     type: 'list',
     name: 'id',
-    message: 'Seleccione lugar:',
-    choices
-  }];
-  const { id } = await inquirer.prompt(preguntas);
+    message: 'Select a place:',
+    choices,
+  };
+  const { id } = await inquirer.prompt(question);
   return id;
-}
+};
 
-const mostrarListadoCheckList = async (tareas = []) => {
-  const choices = tareas.map((tarea, i) => {
-    const idx = `${i + 1}`.cyan;
-    return {
-      value: tarea.id,
-      name: `${idx} ${tarea.desc}`,
-      checked: (tarea.completadoEn) ? true : false
-    }
-  });
-  const pregunta = [{
-    type: 'checkbox',
-    name: 'ids',
-    message: 'Seleccione',
-    choices
-  }];
-  const { ids } = await inquirer.prompt(pregunta);
-  return ids;
-}
-
-const confirmar = async (message = '') => {
-  const preguntas = [{
-    type: 'confirm',
-    name: 'ok',
-    message: message.red
-  }];
-  const { ok } = await inquirer.prompt(preguntas);
-  return ok;
-}
-
+const pause = async () => {
+  const question = {
+    type: 'input',
+    name: 'enter',
+    message: `Press ${'ENTER'.cyan} to continue`,
+  };
+  console.log();
+  await inquirer.prompt(question);
+};
 
 module.exports = {
   inquireMenu,
-  pausa,
-  leerInput,
-  listarLugares,
-  mostrarListadoCheckList,
-  confirmar
-}
+  pause,
+  readInput,
+  selectPlaceFromList,
+};
